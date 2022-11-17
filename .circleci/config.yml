@@ -1,0 +1,43 @@
+version: 2.1
+
+orbs:
+  node: circleci/node@4.7
+
+jobs:
+  build-app:
+    working_directory: ~/smartcities-auth-service/authenticator
+    docker:
+      - image: cimg/node:16.9.0
+        environment:
+          DB_NAME: postgres
+      - image: postgres:latest
+        environment:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: postgres
+    steps:
+      - checkout:
+          path: ~/smartcities-auth-service
+      - restore_cache:
+          keys:
+          - app-{{ checksum "package.json" }}-{{ "package-lock.json" }}
+          - app-
+      - run:
+          command: ls
+      - node/install-packages:
+          pkg-manager: npm
+
+      - save_cache:
+          paths:
+            - ~/.m2
+          key: app-{{ checksum "package.json" }}-{{ "package-lock.json" }}
+
+      - run:
+          command: npm run lint
+          name: Run linter
+  
+workflows:
+  check:
+    jobs:
+      - build-app
+      

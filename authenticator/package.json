@@ -1,0 +1,30 @@
+{
+  "name": "authenticator",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "node ./src/index.js",
+    "lint": "eslint --ext .js,.ts src .",
+    "lint-fix": "eslint --ext .js,.ts . --fix"
+  },
+  "keywords": [],
+  "author": "Nicolás Fraga",
+  "license": "ISC",
+  "dependencies": {
+    "@koa/cors": "^4.0.0",
+    "body-parser": "^1.20.0",
+    "jsonwebtoken": "^8.5.1",
+    "koa": "^2.13.4",
+    "koa-bodyparser": "^4.3.0",
+    "koa-router": "^12.0.0",
+    "pg": "^8.8.0",
+    "pg-hstore": "^2.3.4",
+    "sequelize": "^6.25.6"
+  },
+  "devDependencies": {
+    "eslint": "^8.27.0",
+    "eslint-config-google": "^0.14.0",
+    "eslint-plugin-import": "^2.26.0"
+  }
+}
