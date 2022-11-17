@@ -1,0 +1,30 @@
+#!/bin/bash
+set -e
+
+psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" <<-EOSQL
+  CREATE USER root;
+  ALTER ROLE root with password 'root';
+  CREATE DATABASE root;
+  \q
+EOSQL
+
+export PGPASSWORD=$POSTGRES_PASSWORD;
+psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" <<-EOSQL
+  CREATE DATABASE $APP_DB_NAME;
+  \connect $APP_DB_NAME
+  CREATE EXTENSION IF NOT EXISTS postgis;
+  CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+  CREATE USER $APP_DB_USER WITH PASSWORD '$APP_DB_PASS';
+  GRANT ALL PRIVILEGES ON DATABASE $APP_DB_NAME TO $APP_DB_USER;
+  \connect $APP_DB_NAME $APP_DB_USER
+  BEGIN;
+    CREATE TABLE IF NOT EXISTS users (
+      id SERIAL PRIMARY KEY,
+	    uuid UUID DEFAULT uuid_generate_v4(),
+	    username VARCHAR(30) NOT NULL UNIQUE,
+      email VARCHAR(80) NOT NULL UNIQUE,
+      password VARCHAR(70) NOT NULL,
+      verified BOOLEAN DEFAULT FALSE
+	  );
+  COMMIT;
+EOSQL
