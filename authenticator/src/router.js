@@ -12,14 +12,13 @@ const {
 
 const router = new KoaRouter();
 
-router.post('verify', '/verify', async (ctx, next) => {
+router.get('verify', '/verify', async (ctx, next) => {
   const token = checkForToken(ctx);
   await jwt.verify(
       token,
       JWT_SECRET,
       async (error, authData) => {
         if (error) {
-          console.log('Forbidden');
           ctx.status = 403;
           ctx.body = {
             message: error,
