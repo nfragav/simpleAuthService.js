@@ -25,8 +25,7 @@ router.post('verify', '/verify', async (ctx, next) => {
             message: error,
           };
         } else {
-          console.log('Allowed');
-          return await next();
+          ctx.throw(200);
         }
       },
   );
