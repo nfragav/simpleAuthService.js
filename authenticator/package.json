@@ -12,9 +12,10 @@
   "author": "Nicolás Fraga",
   "license": "ISC",
   "dependencies": {
-    "@koa/cors": "^4.0.0",
+    "@koa/cors": "^5.0.0",
+    "bcryptjs": "^2.4.3",
     "body-parser": "^1.20.0",
-    "jsonwebtoken": "^8.5.1",
+    "jsonwebtoken": "^9.0.2",
     "koa": "^2.13.4",
     "koa-bodyparser": "^4.3.0",
     "koa-router": "^12.0.0",
