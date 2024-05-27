@@ -23,6 +23,7 @@ services:
       DB_HOST: '${DB_HOST}'
       DB_PORT: '${DB_PORT}'
       JWT_SECRET: '${JWT_SECRET}'
+      SALT_ROUNDS: '${SALT_ROUNDS}'
 
   users-db:
     image: postgis/postgis:14-3.3

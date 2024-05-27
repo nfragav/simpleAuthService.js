@@ -3,6 +3,8 @@
 # Script to wait for db container to be ready
 set -e
 
+cmd="$@"
+
 until pg_isready --host="${DB_HOST}" --username="${DB_USER_FOR_APP}" --port="${DB_PORT}"; do
   >&2 echo "Postgres is unavailable - sleeping"
   sleep 3

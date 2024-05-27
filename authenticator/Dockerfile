@@ -19,4 +19,4 @@ RUN chmod +x /usr/local/bin/await-db.sh
 EXPOSE ${PORT}
 
 # Command to run your application with wait script
-CMD ["sh", "-c", "await-db.sh ${DB_HOST} npm start"]
+CMD ["sh", "-c", "await-db.sh npm start"]
