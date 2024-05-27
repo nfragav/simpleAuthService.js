@@ -2,10 +2,11 @@ const jwt = require('jsonwebtoken');
 const {User} = require('./connection');
 const {JWT_SECRET} = process.env;
 
+
 const generateToken = (user) => new Promise((resolve, reject) => {
   jwt.sign(
       {
-        sub: user.uuid,
+        sub: user.id,
         verified: user.verified,
       },
       JWT_SECRET,

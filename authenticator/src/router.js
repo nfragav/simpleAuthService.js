@@ -1,8 +1,8 @@
 const KoaRouter = require('koa-router');
 const jwt = require('jsonwebtoken');
 const {User} = require('./connection');
-
-const {JWT_SECRET} = process.env;
+const bcrypt = require('bcryptjs');
+const {JWT_SECRET, SALT_ROUNDS} = process.env;
 const {
   generateToken,
   checkForToken,
@@ -10,6 +10,7 @@ const {
   handleResponse,
 } = require('./helpers');
 
+const saltRounds = parseInt(SALT_ROUNDS);
 const router = new KoaRouter();
 
 router.post('verify', '/verify', async (ctx, next) => {
@@ -35,39 +36,40 @@ router.post('verify', '/verify', async (ctx, next) => {
         handleResponse(ctx)(409, {
           message: 'Email address or Username already exist',
         });
-      } else {
-        const user = await User.create(userParams);
-        const token = await generateToken(user);
-        handleResponse(ctx)(201, {
-          user: {
-            username: user.username,
-            email: user.email,
-          },
-          token: {
-            access_token: token,
-            token_type: 'Bearer',
-          },
-        });
+        return;
       }
+      const hashPassword = await bcrypt.hash(userParams.password, saltRounds);
+      userParams.password = hashPassword;
+      const {id, username, email, verified} = await User.create(userParams);
+      const token = await generateToken({id, username, email, verified});
+      handleResponse(ctx)(201, {
+        user: {username, email},
+        token: {
+          access_token: token,
+          token_type: 'Bearer',
+        },
+      });
     })
 
     .post('login', '/login', async (ctx) => {
       try {
-        const userParams = ctx.request.body;
+        const {username, password} = ctx.request.body;
+        console.log("Users:", users)
         const user = await User.findOne({
           where: {
-            username: userParams.username,
+            username,
           },
         });
         if (!user) {
           handleResponse(ctx)(403, {
-            message: `No username matching ${userParams.username}`,
+            message: 'Username or password is incorrect',
           });
           return;
         }
-        if (user.password !== userParams.password) {
+        const passwordMatch = await bcrypt.compare(password, user.password);
+        if (!passwordMatch) {
           handleResponse(ctx)(401, {
-            message: 'Password mismatch',
+            message: 'Username or password is incorrect',
           });
           return;
         }
@@ -83,6 +85,7 @@ router.post('verify', '/verify', async (ctx, next) => {
           },
         });
       } catch (err) {
+        console.error(err);
         handleResponse(ctx)(500, {
           message: 'Internal Server Error',
         });
