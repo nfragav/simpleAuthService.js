@@ -1,2 +1,19 @@
+# Project-related
 *.env
-*node_modules
+
+# Node.js and build artifacts
+**/node_modules/
+**/npm-debug.log
+**/yarn-error.log
+**/*.lock
+**/package-lock.json
+
+# OS Related
+**/.DS_Store
+**/Thumbs.db
+
+# Logs
+**/*.log
+
+# Others
+*.py
