@@ -6,25 +6,23 @@ const {JWT_SECRET} = process.env;
 const {
   generateToken,
   checkForToken,
-  emailExists,
-  usernameExists,
+  userAlreadyExists,
+  handleResponse,
 } = require('./helpers');
 
 const router = new KoaRouter();
 
-router.get('verify', '/verify', async (ctx, next) => {
+router.post('verify', '/verify', async (ctx, next) => {
   const token = checkForToken(ctx);
   await jwt.verify(
       token,
       JWT_SECRET,
       async (error, authData) => {
         if (error) {
-          ctx.status = 403;
-          ctx.body = {
-            message: error,
-          };
+          handleResponse(ctx)(403, {mesage: error});
         } else {
-          ctx.throw(200);
+          console.log(authData);
+          handleResponse(ctx)(200, null);
         }
       },
   );
@@ -32,23 +30,24 @@ router.get('verify', '/verify', async (ctx, next) => {
 
     .post('user.create', '/users', async (ctx, next) => {
       const userParams = ctx.request.body;
-      const existingEmail = await emailExists(userParams);
-      const existingUsername = await usernameExists(userParams);
-      if (existingEmail || existingUsername) {
-        ctx.status = 409;
-        ctx.body = {
+      const existingUserData = await userAlreadyExists(userParams);
+      if (existingUserData) {
+        handleResponse(ctx)(409, {
           message: 'Email address or Username already exist',
-        };
+        });
       } else {
         const user = await User.create(userParams);
         const token = await generateToken(user);
-        ctx.status = 201;
-        ctx.body = {
+        handleResponse(ctx)(201, {
+          user: {
+            username: user.username,
+            email: user.email,
+          },
           token: {
             access_token: token,
             token_type: 'Bearer',
           },
-        };
+        });
       }
     })
 
@@ -60,33 +59,33 @@ router.get('verify', '/verify', async (ctx, next) => {
             username: userParams.username,
           },
         });
-        if (user) {
-          if (user.password === userParams.password) {
-            const token = await generateToken(user);
-            ctx.status = 201;
-            ctx.body = {
-              token: {
-                access_token: token,
-                token_type: 'Bearer',
-              },
-            };
-          } else {
-            ctx.status = 401;
-            ctx.body = {
-              message: 'Password mismatch',
-            };
-          }
-        } else {
-          ctx.status = 403;
-          ctx.body = {
+        if (!user) {
+          handleResponse(ctx)(403, {
             message: `No username matching ${userParams.username}`,
-          };
+          });
+          return;
         }
+        if (user.password !== userParams.password) {
+          handleResponse(ctx)(401, {
+            message: 'Password mismatch',
+          });
+          return;
+        }
+        const token = await generateToken(user);
+        handleResponse(ctx)(201, {
+          user: {
+            username: user.username,
+            email: user.email,
+          },
+          token: {
+            access_token: token,
+            token_type: 'Bearer',
+          },
+        });
       } catch (err) {
-        ctx.status = 500;
-        ctx.body = {
-          message: `Internal server error: ${err}`,
-        };
+        handleResponse(ctx)(500, {
+          message: 'Internal Server Error',
+        });
       }
     });
 

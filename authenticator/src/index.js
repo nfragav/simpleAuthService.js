@@ -12,7 +12,5 @@ app.use(cors({
 }));
 
 const {router} = require('./router');
-
 app.use(router.routes()).use(router.allowedMethods());
-
 app.listen(PORT, () => console.log(`Server started on port ${PORT}...`));

@@ -1,13 +1,11 @@
 const jwt = require('jsonwebtoken');
 const {User} = require('./connection');
-
 const {JWT_SECRET} = process.env;
 
 const generateToken = (user) => new Promise((resolve, reject) => {
   jwt.sign(
       {
-        sub: user.id,
-        uuid: user.uuid,
+        sub: user.uuid,
         verified: user.verified,
       },
       JWT_SECRET,
@@ -26,8 +24,16 @@ const checkForToken = (ctx) => {
   }
 };
 
-const emailExists = async (user) => {
-  const users = await User.findAll({
+const userAlreadyExists = async (user) => {
+  let users = await User.findAll({
+    where: {
+      username: user.username,
+    },
+  });
+  if (users.length > 0) {
+    return true;
+  }
+  users = await User.findAll({
     where: {
       email: user.email,
     },
@@ -38,21 +44,14 @@ const emailExists = async (user) => {
   return false;
 };
 
-const usernameExists = async (user) => {
-  const users = await User.findAll({
-    where: {
-      username: user.username,
-    },
-  });
-  if (users.length > 0) {
-    return true;
-  }
-  return false;
+const handleResponse = (ctx) => (statusCode, body) => {
+  ctx.body = body;
+  ctx.status = statusCode;
 };
 
 module.exports = {
   generateToken,
   checkForToken,
-  emailExists,
-  usernameExists,
+  userAlreadyExists,
+  handleResponse,
 };

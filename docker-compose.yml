@@ -9,8 +9,8 @@ services:
     restart: unless-stopped
     networks:
       - db-authenticator-network
-    volumes:
-      - ./src:/auth/src
+    # volumes:
+    #   - ./src:/auth/src
     ports:
       - "${AUTH_PORT}:${AUTH_PORT}"
     depends_on:
