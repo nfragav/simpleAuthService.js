@@ -77,14 +77,18 @@ Logs in a user and returns an authentication token if the credentials are correc
     "token_type": "Bearer"
   }
 }
+```
+
 - 401 Unauthorized: Username or password is incorrect.
 ```
 {
   "message": "Username or password is incorrect"
 }
 ```
+
 - 403 Forbidden: Username or password is incorrect.
 ```
+
 {
   "message": "Username or password is incorrect"
 }
