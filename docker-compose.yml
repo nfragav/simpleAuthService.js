@@ -9,8 +9,6 @@ services:
     restart: unless-stopped
     networks:
       - db-authenticator-network
-    # volumes:
-    #   - ./src:/auth/src
     ports:
       - "${AUTH_PORT}:${AUTH_PORT}"
     depends_on:
@@ -26,7 +24,7 @@ services:
       SALT_ROUNDS: '${SALT_ROUNDS}'
 
   users-db:
-    image: postgis/postgis:14-3.3
+    image: postgres:14
     container_name: users-db
     restart: always
     healthcheck:
