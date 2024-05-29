@@ -86,14 +86,6 @@ Logs in a user and returns an authentication token if the credentials are correc
 }
 ```
 
-- 403 Forbidden: Username or password is incorrect.
-```
-
-{
-  "message": "Username or password is incorrect"
-}
-```
-
 ### Error Handling
 Errors are returned in the following format:
 ```
