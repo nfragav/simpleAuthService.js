@@ -1,95 +1,65 @@
 const KoaRouter = require('koa-router');
-const jwt = require('jsonwebtoken');
 const {User} = require('./connection');
+const {handleResponse} = require('./helpers');
+const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
-const {JWT_SECRET, SALT_ROUNDS} = process.env;
-const {
-  generateToken,
-  checkForToken,
-  userAlreadyExists,
-  handleResponse,
-} = require('./helpers');
+const tokensService = require('./services/tokens');
+const usersService = require('./services/users');
+const encryptionService = require('./services/encryption');
 
-const saltRounds = parseInt(SALT_ROUNDS);
 const router = new KoaRouter();
 
 router.post('verify', '/verify', async (ctx, next) => {
-  const token = checkForToken(ctx);
-  await jwt.verify(
-      token,
-      JWT_SECRET,
-      async (error, authData) => {
-        if (error) {
-          handleResponse(ctx)(403, {mesage: error});
-        } else {
-          console.log(authData);
-          handleResponse(ctx)(200, null);
-        }
-      },
-  );
+  try {
+    await tokensService.checkToken(ctx);
+  } catch (err) {
+    next(ctx, err);
+  }
 })
 
-    .post('user.create', '/users', async (ctx, next) => {
+  .post('users.create', '/users', async (ctx, next) => {
+    try {
       const userParams = ctx.request.body;
-      const existingUserData = await userAlreadyExists(userParams);
-      if (existingUserData) {
-        handleResponse(ctx)(409, {
-          message: 'Email address or Username already exist',
-        });
-        return;
-      }
-      const hashPassword = await bcrypt.hash(userParams.password, saltRounds);
-      userParams.password = hashPassword;
-      const {id, username, email, verified} = await User.create(userParams);
-      const token = await generateToken({id, username, email, verified});
+      await encryptionService.hashPasswordInPlace(userParams);
+      await usersService.handleUserAlreadyExists(ctx)(userParams);
+      const {username, email, verified} = await User.create(userParams);
+      const token = await tokensService.generateToken({
+        username,
+        email,
+        verified
+      });
       handleResponse(ctx)(201, {
-        user: {username, email},
         token: {
           access_token: token,
           token_type: 'Bearer',
         },
       });
-    })
+    } catch (err) {
+      next(ctx, err);
+    }
+  })
 
-    .post('login', '/login', async (ctx) => {
-      try {
-        const {username, password} = ctx.request.body;
-        console.log("Users:", users)
-        const user = await User.findOne({
-          where: {
-            username,
-          },
-        });
-        if (!user) {
-          handleResponse(ctx)(403, {
-            message: 'Username or password is incorrect',
-          });
-          return;
-        }
-        const passwordMatch = await bcrypt.compare(password, user.password);
-        if (!passwordMatch) {
-          handleResponse(ctx)(401, {
-            message: 'Username or password is incorrect',
-          });
-          return;
-        }
-        const token = await generateToken(user);
-        handleResponse(ctx)(201, {
-          user: {
-            username: user.username,
-            email: user.email,
-          },
-          token: {
-            access_token: token,
-            token_type: 'Bearer',
-          },
-        });
-      } catch (err) {
-        console.error(err);
-        handleResponse(ctx)(500, {
-          message: 'Internal Server Error',
-        });
-      }
+  .post('login', '/login', async (ctx) => {
+    try {
+      const user = await usersService.handleUserLogIn(ctx)(ctx.request.body);
+      await encryptionService.comparePassword(ctx)(password, user.password);
+      const token = await tokensService.generateToken(user);
+      handleResponse(ctx)(201, {
+        token: {
+          access_token: token,
+          token_type: 'Bearer',
+        },
+      });
+    } catch (err) {
+      next(ctx, err);
+    }
+  })
+
+  .use(ctx, error => {
+    console.error(error);
+    handleResponse(ctx)(500, {
+      message: 'Internal Server Error',
     });
+  });
 
 module.exports = {router};
