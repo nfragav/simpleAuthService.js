@@ -6,60 +6,66 @@ const bcrypt = require('bcryptjs');
 const tokensService = require('./services/tokens');
 const usersService = require('./services/users');
 const encryptionService = require('./services/encryption');
+const CustomErrorResponse = require('./errors/customErrorResponse');
+
 
 const router = new KoaRouter();
 
-router.post('verify', '/verify', async (ctx, next) => {
+router
+.use(async (ctx, next) => {
   try {
-    await tokensService.checkToken(ctx);
+    await next();
   } catch (err) {
-    next(ctx, err);
+    console.log("Error catched!");
+    console.error(err);
+    if (err instanceof CustomErrorResponse) {
+      handleResponse(ctx)(err.statusCode, {
+        message: err.message,
+      });
+    } else {
+      handleResponse(ctx)(500, {
+        message: 'Internal server error',
+      });
+    }
   }
 })
 
+  .post('verify', '/verify', async (ctx, next) => {
+    await tokensService.checkToken(ctx);
+  })
+
   .post('users.create', '/users', async (ctx, next) => {
-    try {
-      const userParams = ctx.request.body;
-      await encryptionService.hashPasswordInPlace(userParams);
-      await usersService.handleUserAlreadyExists(ctx)(userParams);
-      const {username, email, verified} = await User.create(userParams);
-      const token = await tokensService.generateToken({
-        username,
-        email,
-        verified
-      });
-      handleResponse(ctx)(201, {
-        token: {
-          access_token: token,
-          token_type: 'Bearer',
-        },
-      });
-    } catch (err) {
-      next(ctx, err);
-    }
-  })
-
-  .post('login', '/login', async (ctx) => {
-    try {
-      const user = await usersService.handleUserLogIn(ctx)(ctx.request.body);
-      await encryptionService.comparePassword(ctx)(password, user.password);
-      const token = await tokensService.generateToken(user);
-      handleResponse(ctx)(201, {
-        token: {
-          access_token: token,
-          token_type: 'Bearer',
-        },
-      });
-    } catch (err) {
-      next(ctx, err);
-    }
-  })
-
-  .use(ctx, error => {
-    console.error(error);
-    handleResponse(ctx)(500, {
-      message: 'Internal Server Error',
+    const userParams = ctx.request.body;
+    console.log("Received Params:", userParams);
+    await encryptionService.hashPasswordInPlace(userParams);
+    console.log("After hashing password:", userParams);
+    await usersService.handleUserAlreadyExists(userParams);
+    const {username, email, verified} = await User.create(userParams);
+    const token = await tokensService.generateToken({
+      username,
+      email,
+      verified
     });
-  });
+    handleResponse(ctx)(201, {
+      token: {
+        access_token: token,
+        token_type: 'Bearer',
+      },
+    });
+  })
+
+  .post('login', '/login', async (ctx, next) => {
+    console.log(ctx.request.body);
+    const user = await usersService.handleUserLogIn(ctx.request.body);
+    await encryptionService.comparePassword(ctx.request.body.password, user.password);
+    const token = await tokensService.generateToken(user);
+    handleResponse(ctx)(201, {
+      token: {
+        access_token: token,
+        token_type: 'Bearer',
+      },
+    });
+  })
+
 
 module.exports = {router};

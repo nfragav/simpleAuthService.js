@@ -1,18 +1,17 @@
-const {User} = require('./connection');
-const {handleResponse} = require('../helpers');
+const {User} = require('../connection');
+const {comparePassword} = require('./encryption');
+const CustomErrorResponse = require('../errors/customErrorResponse');
 
 
-const handleUserAlreadyExists = (ctx) = async (user) => {
+const handleUserAlreadyExists = async (user) => {
+  console.log("Received user:", user);
   let users = await User.findAll({
     where: {
       username: user.username,
     },
   });
   if (users.length > 0) {
-    handleResponse(ctx)(409, {
-      message: 'Email address or username already exist',
-    });
-    return;
+    throw new CustomErrorResponse(409, 'User already exists');
   };
   users = await User.findAll({
     where: {
@@ -20,26 +19,21 @@ const handleUserAlreadyExists = (ctx) = async (user) => {
     },
   });
   if (users.length > 0) {
-    handleResponse(ctx)(409, {
-      message: 'Email address or username already exist',
-    });
-    return;
+    throw new CustomErrorResponse(409, 'User already exists');
   };
   return;
 };
 
-const handleUserLogIn = (ctx) = async (receivedUser) => {
-  const user = await User.findOne({
+const handleUserLogIn = async (receivedUser) => {
+  let user = await User.findOne({
     where: {
       username: receivedUser.username,
     },
   });
   if (!user) {
-    handleResponse(ctx)(403, {
-      message: 'Username or password is incorrect',
-    });
-    return;
+    throw new CustomErrorResponse(403, 'Username or password is incorrect');
   }
+  comparePassword(receivedUser.password, user.password);
   return user;
 }
 
