@@ -34,6 +34,10 @@ const User = sequelize.define('user', {
     type: DataTypes.TEXT,
     allowNull: false,
   },
+  hashedEmail: {
+    field: 'hashed_email',
+    type: DataTypes.TEXT,
+  },
   email: {
     type: DataTypes.TEXT,
     allowNull: false,

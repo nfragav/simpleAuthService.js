@@ -1,39 +1,44 @@
-const {User} = require('../connection');
-const {comparePassword} = require('./encryption');
+const {User} = require('./dbConnection');
 const CustomErrorResponse = require('../errors/customErrorResponse');
+const encryptionService = require('./encryption');
+const { Op } = require('sequelize');
 
 
-const handleUserAlreadyExists = async (user) => {
-  console.log("Received user:", user);
-  let users = await User.findAll({
+const handleUserAlreadyExists = async (receivedUser) => {
+  console.log("Received user for verifying existence:", receivedUser);
+  const user = await User.findOne({
     where: {
-      username: user.username,
+      [Op.or]: [
+        { username: receivedUser.username || '' },
+        { hashedEmail: receivedUser.hashedEmail || '' }
+      ]
     },
   });
-  if (users.length > 0) {
-    throw new CustomErrorResponse(409, 'User already exists');
-  };
-  users = await User.findAll({
-    where: {
-      email: user.email,
-    },
-  });
-  if (users.length > 0) {
+  if (user) {
     throw new CustomErrorResponse(409, 'User already exists');
   };
   return;
 };
 
 const handleUserLogIn = async (receivedUser) => {
-  let user = await User.findOne({
+  const { usernameOrEmail, password } = receivedUser;
+
+  const user = await User.findOne({
     where: {
-      username: receivedUser.username,
+      [Op.or]: [
+        { username: usernameOrEmail || '' },
+        { hashedEmail: encryptionService.hashEmail(usernameOrEmail) || '' }
+      ]
     },
   });
+
   if (!user) {
+    console.log("User not found!");
     throw new CustomErrorResponse(403, 'Username or password is incorrect');
   }
-  comparePassword(receivedUser.password, user.password);
+
+  await encryptionService.comparePassword(password, user.password);
+
   return user;
 }
 

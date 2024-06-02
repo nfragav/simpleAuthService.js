@@ -1,13 +1,14 @@
 const jwt = require('jsonwebtoken');
 const {handleResponse} = require('../helpers');
 const {JWT_SECRET} = process.env;
+const CustomErrorResponse = require('../errors/customErrorResponse');
 
 
 const generateToken = (user) => new Promise((resolve, reject) => {
   jwt.sign(
       {
         username: user.username,
-        email: user.email,
+        hashedEmail: user.hashedEmail,
         verified: user.verified,
       },
       JWT_SECRET,
@@ -24,7 +25,7 @@ const checkToken = async (ctx) => {
       JWT_SECRET,
       async (error, authData) => {
         if (error) {
-          handleResponse(ctx)(403, {mesage: error});
+          throw new CustomErrorResponse(403, 'Authentication failed');
         } else {
           console.log(authData);
           handleResponse(ctx)(200, null);
