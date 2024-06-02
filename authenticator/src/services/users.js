@@ -34,7 +34,7 @@ const handleUserLogIn = async (receivedUser) => {
 
   if (!user) {
     console.log("User not found!");
-    throw new CustomErrorResponse(403, 'Username or password is incorrect');
+    throw new CustomErrorResponse(401, 'Username or password is incorrect');
   }
 
   await encryptionService.comparePassword(password, user.password);

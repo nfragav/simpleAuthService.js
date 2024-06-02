@@ -41,10 +41,10 @@ router
     const userParams = ctx.request.body;
     console.log("User params after encryption:", userParams);
     await usersService.handleUserAlreadyExists(userParams);
-    const {username, verified} = await User.create(userParams);
+    const {username, hashedEmail, verified} = await User.create(userParams);
     const token = await tokensService.generateToken({
       username,
-      email,
+      hashedEmail,
       verified
     });
     handleResponse(ctx)(201, {
