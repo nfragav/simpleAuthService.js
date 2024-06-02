@@ -18,9 +18,10 @@ psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" <<-E
   BEGIN;
     CREATE TABLE IF NOT EXISTS users (
 	    id UUID PRIMARY KEY,
-	    username VARCHAR(80) NOT NULL UNIQUE,
-      email VARCHAR(80) NOT NULL UNIQUE,
-      password VARCHAR(80) NOT NULL,
+	    username TEXT NOT NULL UNIQUE,
+      hashed_email TEXT NOT NULL UNIQUE,
+      email TEXT NOT NULL UNIQUE,
+      password TEXT NOT NULL,
       verified BOOLEAN DEFAULT FALSE
 	  );
   COMMIT;

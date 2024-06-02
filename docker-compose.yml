@@ -21,7 +21,10 @@ services:
       DB_HOST: '${DB_HOST}'
       DB_PORT: '${DB_PORT}'
       JWT_SECRET: '${JWT_SECRET}'
-      SALT_ROUNDS: '${SALT_ROUNDS}'
+      PASSWORD_SALT_ROUNDS: ${PASSWORD_SALT_ROUNDS}
+      EMAIL_SECRET: '${EMAIL_SECRET}'
+      EMAIL_CRYPTO_ALGORITHM: '${EMAIL_CRYPTO_ALGORITHM}'
+      EMAIL_HASH_SECRET: '${EMAIL_HASH_SECRET}'
 
   users-db:
     image: postgres:14
